@@ -24,9 +24,9 @@ POST request to the root URL with the following JSON <code>{"url":"http://exampl
 
 ###TODO
 
-[ ] validation of imcoming urls
-[ ] increment the hit counter, or ditch it
-[ ] show stats for a URL, if the hitcounter stays 
-[ ] correct response codes, 201, 404, 500
-[ ] better logging of errors
-[ ] settings to a settings file
+- validation of imcoming urls
+- increment the hit counter, or ditch it
+- show stats for a URL, if the hitcounter stays 
+- correct response codes, 201, 404, 500
+- better logging of errors
+- settings to a settings file
