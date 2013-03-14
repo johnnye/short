@@ -17,16 +17,16 @@ Set your application domain at the top if the short.go file. It's a variable cal
 ####Create
 POST request to the root URL with the following JSON <code>{"url":"http://example.com"}</code> the folowing response is sent to you
 
-````
+```JSON
 	{"Original":"http://example.com","Short":"AA","FullShort":"http://localhost:8080/AA","HitCount":0}
-
+```
 
 
 ###TODO
 
-* validation of imcoming urls
-* increment the hit counter, or ditch it
-* show stats for a URL, if the hitcounter stays 
-* correct response codes, 201, 404, 500
-* better logging of errors
-* settings to a settings file
+[ ] validation of imcoming urls
+[ ] increment the hit counter, or ditch it
+[ ] show stats for a URL, if the hitcounter stays 
+[ ] correct response codes, 201, 404, 500
+[ ] better logging of errors
+[ ] settings to a settings file
