@@ -78,8 +78,7 @@ func createShortURL(url string) Data {
 		}
 	}
 	var d Data
-	encodedVar := base62.StdEncoding.EncodeToString([]byte(string(len(collection))))
-	encodedVar = strings.Trim(encodedVar, "=")
+	encodedVar := base62.EncodeInt(len(collection))
 	d.FullShort = strings.Join([]string{domain, encodedVar}, "")
 	d.Short = encodedVar
 	d.Original = url
@@ -100,5 +99,7 @@ func getLongURL(short string) string {
 
 func main() {
 	http.HandleFunc("/", handler)
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(":8189", nil)
+
+	fmt.Printf("%v\n", "Hello")
 }
