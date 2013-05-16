@@ -41,12 +41,13 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if len(create) == 0 {
-		long := getLongURL(r.URL.Path[1:])
-		if len(long) > 0 {
-			http.Redirect(w, r, long, http.StatusFound)
+		var domain Data
+		domain = getLongURL(r.URL.Path[1:])
+		if len(domain.Original) > 0 {
+			http.Redirect(w, r, domain.Original, http.StatusFound)
 			return
 		}
-		http.Redirect(w, r, domain, http.StatusNotFound)
+		http.Redirect(w, r, domain.Original, http.StatusNotFound)
 		return
 	}
 
@@ -78,7 +79,7 @@ func createShortURL(url string) Data {
 		}
 	}
 	var d Data
-	encodedVar := base62.EncodeInt(len(collection))
+	encodedVar := base62.EncodeInt(int64(len(collection)))
 	d.FullShort = strings.Join([]string{domain, encodedVar}, "")
 	d.Short = encodedVar
 	d.Original = url
@@ -88,18 +89,17 @@ func createShortURL(url string) Data {
 	return d
 }
 
-func getLongURL(short string) string {
+func getLongURL(short string) Data {
 	for _, element := range collection {
 		if element.Short == short {
-			return element.Original
+			return element
 		}
 	}
-	return ""
+	var d Data
+	return d
 }
 
 func main() {
 	http.HandleFunc("/", handler)
-	http.ListenAndServe(":8189", nil)
-
-	fmt.Printf("%v\n", "Hello")
+	http.ListenAndServe(":8080", nil)
 }

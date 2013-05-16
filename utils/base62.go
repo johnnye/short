@@ -22,23 +22,26 @@ type Encoding struct {
 	decodeMap [256]byte
 }
 
-var encodeStd2 = []string{"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z","a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z","0","1","2","3","4","5","6","7","8","9"}
+var encodeStd2 = []string{"-","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z","a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z","0","1","2","3","4","5","6","7","8","9"}
 const encodeStd = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 
-func EncodeInt(value int) string{
+func EncodeInt(value int64) string{
 	var output string
-	var remainder int
-	var xyz int
+	var remainder int64
+	var xyz int64
 
-	base := 62
+	base := int64(62)
 	remainder = value % base
 	output = encodeStd2[remainder]
-	xyz = int(math.Floor(float64(xyz / base)))
+	xyz = int64(math.Floor(float64(xyz / base)))
 	for i := 0; i < 10; i++ {
+		if xyz == 0 {
+			break
+		}
 		i = 0
 		remainder = xyz % base
 
-		xyz = int(math.Floor(float64(xyz / base)))
+		xyz = int64(math.Floor(float64(xyz / base)))
 		output = encodeStd2[remainder]+output
 		if(xyz == 0){
 			i=10
