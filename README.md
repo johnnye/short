@@ -18,7 +18,7 @@ Set your application domain at the top of the short.go file. It's a variable cal
 POST request to the root URL with the following JSON <code>{"url":"http://example.com"}</code> the folowing response is sent to you
 
 ```JSON
-	{"Original":"http://example.com","Short":"A","FullShort":"http://localhost:8080/AA","HitCount":0}
+	{"Original":"http://example.com","Short":"A","FullShort":"http://localhost:8080/A","HitCount":0}
 ```
 
 ###TODO
