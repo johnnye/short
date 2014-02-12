@@ -20,10 +20,11 @@ POST request to the root URL with the following JSON <code>{"url":"http://exampl
 ```
 
 ###TODO
-- [ ] show stats for a URL, if the hitcounter stays 
-- [ ] correct response codes, 201, 404, 500
-- [ ] better logging of errors
-- [ ] tests 
-- [ ] channels 
-- [ ] command line options
-- [ ] make the project structure go-like 
+
+- show stats for a URL, if the hitcounter stays 
+- correct response codes, 201, 404, 500
+- better logging of errors
+- tests 
+- channels 
+- command line options
+- make the project structure go-like 
