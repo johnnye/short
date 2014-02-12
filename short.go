@@ -24,8 +24,7 @@ var host = flag.String("h", "localhost", "Bind address to listen on")
 var base = flag.String("b", "http://localhost/", "Base URL for the shortener")
 var port = flag.String("p", "8080", "Port you want to listen on, defaults to 8080")
 var maxConnections = flag.Int("c", 512, "The maximum number of active connections")
-
-const domain = "http://localhost:8080/"
+var redis = flag.String("r", "localhost:6379", "Redis Address, defaults to localhost:6379")
 
 type Data struct {
 	Original  string
@@ -67,7 +66,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conn, err := redis.Dial("tcp", ":6379")
+	conn, err := redis.Dial("tcp", *redis)
 
 	search := strings.Join([]string{"*||", url.URL},"")
 
@@ -109,7 +108,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 func createShortURL(url string) Data {
 
-	conn, err := redis.Dial("tcp", ":6379")
+	conn, err := redis.Dial("tcp", *redis)
 	var d Data
 	count, err := redis.Int(conn.Do("INCR", "global:size"))
 	if err != nil {
@@ -138,7 +137,7 @@ func createShortURL(url string) Data {
 func getLongURL(short string) Data {
 	var d Data
 	
-	conn, err := redis.Dial("tcp", ":6379")
+	conn, err := redis.Dial("tcp", *redis)
 
 	search := strings.Join([]string{short, "||*"},"")
 	fmt.Println(search)
