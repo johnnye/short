@@ -1,15 +1,10 @@
 Shorter - A Go Link Shortner
 ===========================
 
-> Persistence is a waste of time
-
-This is a link shortner written in Go, my first attempt at writing Go. Things are not very 'Go' like at the moment, and a bit of a mess. 
-
-However, if you need a link shortner that has no persistence, but is very, very fast. you'd be better off writing your own. 
+This is a link shortner written in Go, my first attempt at writing Go. 
 
 The shortened hash is calculated by base62 encoding the number of links currently stored.
 
-Also we don't ever store these URLs anywhere, ever, no. Why would you want a to remember about URLs after a crash or reboot. 
 
 ###Use
 Set your application domain at the top of the short.go file. It's a variable called domain

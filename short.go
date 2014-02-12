@@ -14,8 +14,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"net/http"
 	"strings"
+	"net/http"
 	"github.com/garyburd/redigo/redis"
 )
 
@@ -45,6 +45,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	if len(create) == 0 {
 		var domain Data
 		domain = getLongURL(r.URL.Path[1:])
+		fmt.Println(domain)
 		if len(domain.Original) > 0 {
 			http.Redirect(w, r, domain.Original, http.StatusFound)
 			return
@@ -54,13 +55,40 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = json.Unmarshal(create, &url)
+	if err != nil {
+		log.Print(err)
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	conn, err := redis.Dial("tcp", ":6379")
+
+	search := strings.Join([]string{"*||", url.URL},"")
+
+	n, err := redis.Strings(conn.Do("KEYS", search));
+	
+	var newItem Data
+	if len(n) < 1{
+		newItem = createShortURL(url.URL)	
+	}else{
+		parts :=  strings.Split(n[0], "||")
+		
+		newItem.Short = parts[0]
+		newItem.Original = parts[1]
+		newItem.FullShort = strings.Join([]string{domain, parts[0]}, "")
+		newCount, err := redis.Int(conn.Do("HGET", n[0], "count"))
+		if err == nil {
+			//TODO..
+		}
+		newItem.HitCount = newCount
+	}
 
 	if err != nil {
 		log.Print(err)
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	newItem := createShortURL(url.URL)
+	
 	//collection = append(collection, newItem)
 
 	output, err := json.Marshal(newItem)
@@ -70,62 +98,69 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	//TODO: correct headers 201 
 	fmt.Fprintf(w, "%s", output)
 }
 
 func createShortURL(url string) Data {
+
 	conn, err := redis.Dial("tcp", ":6379")
-	//TOOD: Here check the redis instance. 
-	
-	n, err := conn.Do("HGETALL", url)
-	if err == nil {
-		log.Print(n)
-
-		other, err := conn.Do("HINCRBY",url, "HitCount", "1")
-		log.Print(other)
-		if err != nil{
-			log.Print("try something here.")
-			log.Print(err)
-		}
-		var x Data
-		return x
-	}	
-		
-		
-	noKeys, err := conn.Do("DBSIZE")
-
 	var d Data
-	encodedVar := base62.EncodeInt(int64(noKeys.(int)))
-	d.FullShort = strings.Join([]string{domain, encodedVar}, "")
-	d.Short = encodedVar
+	count, err := redis.Int(conn.Do("INCR", "global:size"))
+	if err != nil {
+		log.Print(err)
+		return d
+	}
+	encodedVar := base62.EncodeInt(int64(count))
+	key := strings.Join([]string{encodedVar, url}, "||")
+	conn.Send("MULTI")
+	conn.Send("HSET", key, "count", 0)
+	_, err2 := conn.Do("EXEC")
+
+	if err2 != nil {
+		log.Print(err)
+		return d	
+	}
+
 	d.Original = url
 	d.HitCount = 0
-	
-	newurlindb, err := conn.Do("HMSET", d.Short, d)
-	log.Print(err)	
-	log.Print(d)
-	log.Print(newurlindb)
+	d.Short = encodedVar
+	d.FullShort = strings.Join([]string{domain, encodedVar}, "")
+
 	return d
 }
 
 func getLongURL(short string) Data {
-	conn, err := redis.Dial("tcp", ":6379")
-	//TOOD: Here check the redis instance. 
+	var d Data
 	
-	n, err := conn.Do("HGETALL", short)
-	if err == nil {
-		log.Print(n)
-		other, err := conn.Do("HINCRBY", short,"HitCount", "1")
-		log.Print(other)
-		if err !=nil {
-			log.Print(err)
-		}
-		var x Data
-		return x
+	conn, err := redis.Dial("tcp", ":6379")
+
+	search := strings.Join([]string{short, "||*"},"")
+	fmt.Println(search)
+	n, err := redis.Strings(conn.Do("KEYS", search));
+	
+	if err != nil {
+		fmt.Println("Errors")
+		log.Print(err)
+		return d
 	}
 
-	var d Data
+	if len(n) < 1{
+		//Return an error
+		
+	}else{
+		parts :=  strings.Split(n[0], "||")
+		
+		d.Short = parts[0]
+		d.Original = parts[1]
+		d.FullShort = strings.Join([]string{domain, parts[0]}, "")
+		newCount, err := redis.Int(conn.Do("HINCRBY", n[0], "count",1))
+		if err == nil {
+			//TODO..
+		}
+		d.HitCount = newCount
+		return d
+	}
+
 	return d
 }
 
