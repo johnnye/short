@@ -9,6 +9,7 @@ package main
 *
  */
 import (
+	"flag"
 	"./utils"
 	"encoding/json"
 	"fmt"
@@ -18,6 +19,11 @@ import (
 	"net/http"
 	"github.com/garyburd/redigo/redis"
 )
+
+var host = flag.String("h", "localhost", "Bind address to listen on")
+var base = flag.String("b", "http://localhost/", "Base URL for the shortener")
+var port = flag.String("p", "8080", "Port you want to listen on, defaults to 8080")
+var maxConnections = flag.Int("c", 512, "The maximum number of active connections")
 
 const domain = "http://localhost:8080/"
 
@@ -75,7 +81,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		
 		newItem.Short = parts[0]
 		newItem.Original = parts[1]
-		newItem.FullShort = strings.Join([]string{domain, parts[0]}, "")
+		newItem.FullShort = strings.Join([]string{*base, parts[0]}, "")
 		newCount, err := redis.Int(conn.Do("HGET", n[0], "count"))
 		if err == nil {
 			//TODO..
@@ -124,7 +130,7 @@ func createShortURL(url string) Data {
 	d.Original = url
 	d.HitCount = 0
 	d.Short = encodedVar
-	d.FullShort = strings.Join([]string{domain, encodedVar}, "")
+	d.FullShort = strings.Join([]string{*base, encodedVar}, "")
 
 	return d
 }
@@ -152,7 +158,7 @@ func getLongURL(short string) Data {
 		
 		d.Short = parts[0]
 		d.Original = parts[1]
-		d.FullShort = strings.Join([]string{domain, parts[0]}, "")
+		d.FullShort = strings.Join([]string{*base, parts[0]}, "")
 		newCount, err := redis.Int(conn.Do("HINCRBY", n[0], "count",1))
 		if err == nil {
 			//TODO..
@@ -165,6 +171,10 @@ func getLongURL(short string) Data {
 }
 
 func main() {
+	flag.Parse()
 	http.HandleFunc("/", handler)
-	http.ListenAndServe(":8080", nil)
+	err := http.ListenAndServe(*host+":"+*port, nil)
+	if err != nil{
+		fmt.Println(err)
+	}
 }
