@@ -1,10 +1,12 @@
 package main 
 
 import "testing"
-import "log"
+import "reflect"
 
 func TestCreateShortURL(t *testing.T){
+	var d Data
 	v := createShortURL("http://john.com")
-	log.Print(v)
-	t.Fail()
+	if reflect.TypeOf(v) != reflect.TypeOf(d){
+		t.Fail()
+	}
 }
