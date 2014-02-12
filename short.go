@@ -1,9 +1,10 @@
 package main
 
 /*
-* My in memory link shortner written in Go 
-* This is released under a "you'd be mad to use it" license 
-* 
+* Link Shortener, with a Redis backend. 
+*
+* Released under and MIT License, please see the LICENSE.md file. 
+*
 * John Nye
 *
  */
@@ -15,6 +16,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"github.com/garyburd/redigo/redis"
 )
 
 const domain = "http://localhost:8080/"
@@ -26,7 +28,7 @@ type Data struct {
 	HitCount  int
 }
 
-var collection []Data
+//var collection []Data
 
 func handler(w http.ResponseWriter, r *http.Request) {
 
@@ -59,7 +61,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	newItem := createShortURL(url.URL)
-	collection = append(collection, newItem)
+	//collection = append(collection, newItem)
 
 	output, err := json.Marshal(newItem)
 
@@ -73,28 +75,56 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func createShortURL(url string) Data {
-	for _, element := range collection {
-		if element.Original == url {
-			return element
+	conn, err := redis.Dial("tcp", ":6379")
+	//TOOD: Here check the redis instance. 
+	
+	n, err := conn.Do("HGETALL", url)
+	if err == nil {
+		log.Print(n)
+
+		other, err := conn.Do("HINCRBY",url, "HitCount", "1")
+		log.Print(other)
+		if err != nil{
+			log.Print("try something here.")
+			log.Print(err)
 		}
-	}
+		var x Data
+		return x
+	}	
+		
+		
+	noKeys, err := conn.Do("DBSIZE")
+
 	var d Data
-	encodedVar := base62.EncodeInt(int64(len(collection)))
+	encodedVar := base62.EncodeInt(int64(noKeys.(int)))
 	d.FullShort = strings.Join([]string{domain, encodedVar}, "")
 	d.Short = encodedVar
 	d.Original = url
 	d.HitCount = 0
-
-	log.Print(encodedVar)
+	
+	newurlindb, err := conn.Do("HMSET", d.Short, d)
+	log.Print(err)	
+	log.Print(d)
+	log.Print(newurlindb)
 	return d
 }
 
 func getLongURL(short string) Data {
-	for _, element := range collection {
-		if element.Short == short {
-			return element
+	conn, err := redis.Dial("tcp", ":6379")
+	//TOOD: Here check the redis instance. 
+	
+	n, err := conn.Do("HGETALL", short)
+	if err == nil {
+		log.Print(n)
+		other, err := conn.Do("HINCRBY", short,"HitCount", "1")
+		log.Print(other)
+		if err !=nil {
+			log.Print(err)
 		}
+		var x Data
+		return x
 	}
+
 	var d Data
 	return d
 }
