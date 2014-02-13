@@ -47,6 +47,8 @@ var redisPool = &redis.Pool{
 
 func handler(w http.ResponseWriter, r *http.Request) {
 
+	log.Println(r.UserAgent())
+
 	type NewURL struct {
 		URL string
 	}
@@ -55,13 +57,6 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 	conn := redisPool.Get()
 	create, err := ioutil.ReadAll(r.Body)
-
-	err = json.Unmarshal(create, &url)
-	if err != nil {
-		log.Print(err)
-		http.Error(w, err.Error(), 500)
-		return
-	}
 
 	if err != nil {
 		http.Error(w, err.Error(), 500)
@@ -74,6 +69,13 @@ func handler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		http.Redirect(w, r, domain.Original, http.StatusNotFound)
+		return
+	}
+
+	err = json.Unmarshal(create, &url)
+	if err != nil {
+		log.Print(err)
+		http.Error(w, err.Error(), 500)
 		return
 	}
 
@@ -92,7 +94,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	
+
 	output, err := json.Marshal(domain)
 
 	if err != nil {
@@ -125,6 +127,7 @@ func createShortURL(url string, conn redis.Conn) Data {
 		log.Print(err)
 		return d
 	}
+	log.Print("Total: ",count)
 	encodedVar := base62.EncodeInt(int64(count))
 	key := strings.Join([]string{encodedVar, url}, "||")
 	conn.Send("MULTI")
@@ -157,8 +160,7 @@ func getLongURL(short string, conn redis.Conn) Data {
 	}
 
 	if len(n) < 1 {
-		//Return an error
-
+		log.Print("Nothing Found")
 	} else {
 		parts := strings.Split(n[0], "||")
 
@@ -166,12 +168,12 @@ func getLongURL(short string, conn redis.Conn) Data {
 		d.Original = parts[1]
 		d.FullShort = strings.Join([]string{*base, parts[0]}, "")
 		newCount, err := redis.Int(conn.Do("HINCRBY", n[0], "count", 1))
-		if err == nil {
-			//TODO..
+		if err != nil {
+			log.Println(err)
 		}
 		d.HitCount = newCount
-		return d
 	}
+	log.Println("Served: ",d.Original)
 	return d
 }
 
