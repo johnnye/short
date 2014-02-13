@@ -61,6 +61,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		domain = getLongURL(r.URL.Path[1:], conn)
 		if len(domain.Original) > 0 {
 			http.Redirect(w, r, domain.Original, http.StatusFound)
+			conn.Close()
 			return
 		}
 		http.ServeFile(w, r, "./index.html")		
