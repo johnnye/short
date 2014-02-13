@@ -56,17 +56,16 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	var domain Data
 
 	conn := redisPool.Get()
+	defer conn.Close()
 
 	if r.Method == "GET" {
 		domain = getLongURL(r.URL.Path[1:], conn)
 		if len(domain.Original) > 0 {
 			http.Redirect(w, r, domain.Original, http.StatusFound)
-			conn.Close()
 			return
 		}
 		http.ServeFile(w, r, "./index.html")		
 		log.Println("Served Homepage")
-		conn.Close()
 		return
 	}
 
@@ -108,7 +107,6 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	fmt.Fprintf(w, "%s", output)
-	conn.Close()
 }
 
 func getInfoForKey(key string, conn redis.Conn) Data {
