@@ -35,7 +35,7 @@ type Data struct {
 
 var redisPool = &redis.Pool{
 	MaxIdle:   3,
-	MaxActive: 10, // max number of connections
+	MaxActive: 50, // max number of connections
 	Dial: func() (redis.Conn, error) {
 		c, err := redis.Dial("tcp", *redisConn)
 		if err != nil {
