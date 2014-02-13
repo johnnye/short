@@ -9,7 +9,7 @@ package main
 *
  */
 import (
-	"./utils"
+	"github.com/johnnye/short/utils"
 	"encoding/json"
 	"flag"
 	"fmt"
