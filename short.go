@@ -56,19 +56,22 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	var domain Data
 
 	conn := redisPool.Get()
-	create, err := ioutil.ReadAll(r.Body)
 
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	if len(create) == 0 {
+	if r.Method == "GET" {
 		domain = getLongURL(r.URL.Path[1:], conn)
 		if len(domain.Original) > 0 {
 			http.Redirect(w, r, domain.Original, http.StatusFound)
 			return
 		}
-		http.Redirect(w, r, domain.Original, http.StatusNotFound)
+		http.ServeFile(w, r, "./index.html")		
+		log.Println("Served Homepage")
+		return
+	}
+
+	create, err := ioutil.ReadAll(r.Body)
+
+	if err != nil {
+		http.Error(w, err.Error(), 500)
 		return
 	}
 
