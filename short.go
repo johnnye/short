@@ -10,14 +10,14 @@ package main
  */
 import (
 	"github.com/johnnye/short/utils"
-	"encoding/json"
-	"flag"
-	"fmt"
 	"github.com/garyburd/redigo/redis"
+	"encoding/json"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strings"
+	"flag"
+	"fmt"
+	"log"
 )
 
 var host = flag.String("h", "localhost", "Bind address to listen on")
@@ -59,7 +59,11 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	defer conn.Close()
 
 	if r.Method == "GET" {
-		domain = getLongURL(r.URL.Path[1:], conn)
+		domain, err := getLongURL(r.URL.Path[1:], conn)
+		if err !=nil {
+			log.Println(err)
+		}
+		
 		if len(domain.Original) > 0 {
 			http.Redirect(w, r, domain.Original, http.StatusFound)
 			return
@@ -88,9 +92,9 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	keys, err := redis.Strings(conn.Do("KEYS", search))
 
 	if len(keys) < 1 {
-		domain = createShortURL(url.URL, conn)
+		domain, err = createShortURL(url.URL, conn)
 	} else {
-		domain = getInfoForKey(keys[0], conn)
+		domain, err = getInfoForKey(keys[0], conn)
 	}
 
 	if err != nil {
@@ -109,7 +113,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "%s", output)
 }
 
-func getInfoForKey(key string, conn redis.Conn) Data {
+func getInfoForKey(key string, conn redis.Conn) (Data, error) {
 	var d Data
 	parts := strings.Split(key, "||")
 	d.Short = parts[0]
@@ -120,15 +124,15 @@ func getInfoForKey(key string, conn redis.Conn) Data {
 		log.Print(err)
 	}
 	d.HitCount = newCount
-	return d
+	return d, err
 }
 
-func createShortURL(url string, conn redis.Conn) Data {
+func createShortURL(url string, conn redis.Conn) (Data, error) {
 	var d Data
 	count, err := redis.Int(conn.Do("INCR", "global:size"))
 	if err != nil {
 		log.Print(err)
-		return d
+		return d, err
 	}
 	log.Print("Total: ",count)
 	encodedVar := base62.EncodeInt(int64(count))
@@ -138,8 +142,8 @@ func createShortURL(url string, conn redis.Conn) Data {
 	_, err2 := conn.Do("EXEC")
 
 	if err2 != nil {
-		log.Print(err)
-		return d
+		log.Print(err2)
+		return d, err2
 	}
 
 	d.Original = url
@@ -147,10 +151,10 @@ func createShortURL(url string, conn redis.Conn) Data {
 	d.Short = encodedVar
 	d.FullShort = strings.Join([]string{*base, encodedVar}, "")
 
-	return d
+	return d, err
 }
 
-func getLongURL(short string, conn redis.Conn) Data {
+func getLongURL(short string, conn redis.Conn) (Data, error) {
 	var d Data
 
 	search := strings.Join([]string{short, "||*"}, "")
@@ -159,7 +163,7 @@ func getLongURL(short string, conn redis.Conn) Data {
 
 	if err != nil {
 		log.Print(err)
-		return d
+		return d, err
 	}
 
 	if len(n) < 1 {
@@ -177,7 +181,7 @@ func getLongURL(short string, conn redis.Conn) Data {
 		d.HitCount = newCount
 	}
 	log.Println("Served: ",d.Original)
-	return d
+	return d, nil
 }
 
 func main() {
