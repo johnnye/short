@@ -1,15 +1,12 @@
 package main 
 
 import "testing"
-import "reflect"
 
-/*func TestCreateShortURL(t *testing.T){
+func TestCreateShortURL(t *testing.T){
+	//This is a useless test, but I'm leaving it here to remind me to do it. 
 	var d Data
-	v, err := createShortURL("http://john.com", nil)
-	if err{
+	if d.Original != "" {
 		t.Fail()
 	}
-	if reflect.TypeOf(v) != reflect.TypeOf(d){
-		t.Fail()
-	}
-}*/
+
+}
