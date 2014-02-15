@@ -4,6 +4,8 @@ This is a link shortener written in go.
 
 The shortened hash is calculated by base62 encoding the number of links currently stored.
 
+[![Build Status](https://travis-ci.org/johnnye/short.png?branch=master)](https://travis-ci.org/johnnye/short)
+
 ###Use
 There are 5 commandline options for short
 
